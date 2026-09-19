@@ -81,10 +81,16 @@ uv run python -m agent_framework_demo.main
 
 ## Verified against
 
-- `google-adk` 2.9.2 — the real field is `output_schema`, not
+- `google-adk` 2.7.0 — the real field is `output_schema`, not
   `response_schema`, which several blog posts get wrong. Setting an
   unrecognized field is silently ignored instead of raising, so this is an
   easy way to ship an agent that quietly drops its schema constraint.
+  Note: 2.7.0, not the latest 2.9.2 — `agent-framework>=1.19.0` (below) has a
+  transitive dependency (`agent-framework-foundry-hosting`) that genuinely
+  conflicts with `google-adk==2.9.2` when both live in the same environment,
+  as they do here. `uv` resolves to the highest mutually-compatible version,
+  which is 2.7.0. Not a typo, not staleness — a real ceiling from sharing one
+  `pyproject.toml` across both demos.
 - `agent-framework` 1.19.0 + `agent-framework-azure-ai` 1.0.0rc6 (pre-release
   — install with `uv add --prerelease=allow` if you're adding it fresh).
   `FoundryChatClient` lives under `agent_framework.foundry`.
