@@ -125,7 +125,7 @@ agent = Agent(
 
 ## Jev 怎麼判斷排定的分鏡文字內容「塞不塞得下」預定的影片長度
 
-`check_segment` 本身很單純，就是把片段的秒數跟文字丟給 Jev，問一個 `noul`（是非題）。第一版是自己拿 `httpx` 手刻 REST 呼叫，後來發現 TypeSafe 有[官方 Python SDK](https://docs.typesafe.ai/sdk/python)（`pip install typesafe-sdk`），乾脆直接改用官方的：
+`check_segment` 就是把片段的秒數跟文字丟給 Jev，問一個 `noul`（是非題）。
 
 ```python
 from typesafe_sdk import Noul, TypeSafeClient
@@ -156,9 +156,9 @@ def check_segment(segment_id: str, duration_sec: float, caption: str | None) -> 
 
 開頭那組真實輸出裡，`seg-2` 拿到 `confidence=0.77`，超過 0.6 的門檻被標記；其他三個都在門檻以下、判定正常。這四個數字全部是真的 API 呼叫結果，可以直接拿 repo 裡的 `common/jev_client.py` 重跑一次驗證。
 
-## 拿我前陣子自己開發的影片自動轉字幕工具，當作驗證參考
+## 拿我自己開發的影片自動轉字幕工具 LeapieVideo，當作驗證參考
 
-Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵判斷不夠精確，我把上面那支合成影片丟進我自己另一個專案——**LeapieVideo**（一個 Whisper/Gemini 字幕產生工具）——實際轉錄一次，逐句時間戳自己會說話：
+Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵判斷不夠精確，我把上面那支合成影片丟進我自己另一個專案——**LeapieVideo** 實際轉字幕：
 
 ```json
 {"start": 2.9,   "end": 4.376,  "text": "Google ADK"},
@@ -167,11 +167,11 @@ Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵�
 {"start": 6.557, "end": 8.368,  "text": "一鍵智慧 一鍵執行"}
 ```
 
-`seg-2` 對應的時間軸只到 6.557 秒。原本 JSON 裡那句完整文字是「**Google ADK 讓開發者只需三行程式碼，就能定義一個具備完整推理、規劃與工具呼叫能力、可對接任意企業系統的生產級自主代理**」——實際生出來的影片裡，旁白只唸到「讓開發者只需三行程式碼」就被下一段畫面截斷，後面一大串「就能定義一個具備完整推理、規劃與工具呼叫能力……」**整句話從頭到尾沒有被唸出來**。
+`seg-2` 對應的時間軸只到 6.557 秒。原本 JSON 裡那句完整文字是「**Google ADK 讓開發者只需三行程式碼，就能定義一個具備完整推理、規劃與工具呼叫能力、可對接任意企業系統的生產級自主代理**」——實際生出來的影片裡，旁白只唸到「讓開發者只需三行程式碼」就被下一段畫面截斷。
 
 ## Day1 心得
 
-這邊是系列文的第一篇，重點是機制本身：`VideoTimeline` schema，加上 Jev QC 評判是否需要重新生成分鏡片段，以及 ADK 評估自身回答是否如預期。
+這邊是系列文的第一篇，重點是機制本身：`VideoTimeline` schema，加上用 Jev 評判是否需要重新生成分鏡片段，以及 ADK 評估自身回答是否如預期。
 
 明天會將同樣的 schema 跟 `check_segment`，原封不動改用 Microsoft Agent Framework 重做一次。
 
