@@ -28,6 +28,14 @@ author: Jimmy Liao
 
 Schema 檢查不會發現這件事——它只管「這是不是一個合法的 `photo` 物件」，不管「這個 `caption` 塞不塞得進 `duration_sec`」。**格式合法，不等於內容合理**。這個落差就是這篇文章、以及接下來這整個系列要處理的東西。
 
+別只相信我這段文字描述——我把這四個片段真的丟給 `gemini-omni-1.1-flash` 生成、串接成一支完整 17 秒的影片，看看**完全不管 Jev 警告**會是什麼下場：
+
+<video src="media/day1-full-raw-cut.mp4" controls width="360" poster=""></video>
+
+*（如果你的閱讀器不放影片，直接看 [`articles/media/day1-full-raw-cut.mp4`](media/day1-full-raw-cut.mp4)；只想看出事的那 3 秒，看 [`day1-seg2-too-long.mp4`](media/day1-seg2-too-long.mp4)）*
+
+播到第二段你會聽出來——旁白明顯在趕，句子講到一半畫面就切走了。
+
 ## 為什麼不直接打 Gemini API 就好
 
 老實說，光是「叫模型產生一份符合 schema 的 JSON」這件事，`google-adk` 不是必要的。用最陽春的 `google-genai` SDK，直接打 `gemini-3.1-pro-preview`、帶上 `response_schema`，也能拿到一模一樣的結果，程式碼還更少：
@@ -115,6 +123,21 @@ def check_segment(segment_id: str, duration_sec: float, caption: str | None) -> 
 回傳的 `noul` 是一個 0-1 的機率值，不是模型隨口說的「我覺得 80% 像」——TypeSafe 把這個機率值訓練的目標本身就是校準（calibration）：模型說 70% 的時候，長期而言應該真的有 70% 是對的。這跟一般 LLM 用 `logprobs` 反推信心值不一樣，`logprobs` 反映的是「這個 token 有多常見」，不是「這個判斷有多可信」。
 
 開頭那組真實輸出裡，`seg-2` 拿到 `confidence=0.77`，超過 0.6 的門檻被標記；其他三個都在門檻以下、判定正常。這四個數字全部是真的 API 呼叫結果，可以直接拿 repo 裡的 `common/jev_client.py` 重跑一次驗證。
+
+## 拿自己的字幕工具倒過來驗證
+
+Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵判斷不夠精確，我把上面那支合成影片丟進我自己另一個專案——[liaostudio](https://github.com/jimmyliao/liaostudio)（一個 Whisper/Gemini 字幕產生工具）——實際轉錄一次，逐句時間戳自己會說話：
+
+```json
+{"start": 2.9,   "end": 4.376,  "text": "Google ADK"},
+{"start": 4.376, "end": 5.557,  "text": "讓開發者只需三行"},
+{"start": 5.557, "end": 6.557,  "text": "程式碼"},
+{"start": 6.557, "end": 8.368,  "text": "一鍵智慧 一鍵執行"}
+```
+
+`seg-2` 對應的時間軸只到 6.557 秒。原本 JSON 裡那句完整文字是「**Google ADK 讓開發者只需三行程式碼，就能定義一個具備完整推理、規劃與工具呼叫能力、可對接任意企業系統的生產級自主代理**」——實際生出來的影片裡，旁白只唸到「讓開發者只需三行程式碼」就被下一段畫面截斷，後面一大串「就能定義一個具備完整推理、規劃與工具呼叫能力……」**整句話從頭到尾沒有被唸出來**。
+
+這不是我事後腦補的效果，是拿自己另一個生產工具轉錄出來的真實結果，剛好印證了 Jev 當初給的 `confidence=0.77`：這句文字，塞不進 3 秒鐘。
 
 ## 收尾
 
