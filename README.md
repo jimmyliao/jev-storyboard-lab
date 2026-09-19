@@ -11,16 +11,17 @@ LLM) can sit underneath either one unchanged as a scene-level QC gate.
 
 ```
 common/
-  schemas.py       VideoTimeline / Segment (discriminated union) — the one schema both demos share
-  jev_client.py     Thin client for the Jev API — used identically by both demos
+  schemas.py         VideoTimeline / Segment (discriminated union) — the canonical schema
+  jev_client.py       Thin client for the Jev API — used identically by both demos
 adk_demo/
-  director_agent.py Google ADK Agent, output_schema=VideoTimeline, gemini-3.1-pro-preview
-  main.py            generate → QC every segment with Jev → print report
+  director_agent.py   Google ADK Agent, output_schema=VideoTimeline, gemini-3.1-pro-preview
+  main.py              generate → QC every segment with Jev → print report
 agent_framework_demo/
-  director_agent.py Microsoft Agent Framework Agent, response_format=VideoTimeline, Azure AI Foundry
-  main.py            same generate → QC → report, same common/jev_client.py
+  schemas.py           VideoTimelineAzure — same segments, no discriminator (Azure rejects oneOf)
+  director_agent.py   Microsoft Agent Framework Agent, response_format=VideoTimelineAzure, Azure OpenAI
+  main.py              generate → convert to common.schemas.VideoTimeline → QC → report
 tests/
-  test_jev_client.py live tests against the real Jev API (skips if no key)
+  test_jev_client.py  live tests against the real Jev API (skips if no key)
 ```
 
 ## Why this exists
@@ -67,17 +68,24 @@ uv run python -m adk_demo.main
 
 ### Run the Microsoft Agent Framework demo
 
-Needs an Azure AI Foundry project with a structured-output-capable
-deployment (GPT-4o-2024-08-06+ or GPT-5.x — older deployments don't support
-`response_format` with a Pydantic schema) and `az login` for auth:
+Needs an Azure OpenAI / Azure AI Foundry resource with a structured-output-
+capable deployment (GPT-4o-2024-08-06+ or GPT-5.x — older deployments don't
+support `response_format` with a Pydantic schema). Plain API key auth via
+`agent_framework.openai.OpenAIChatClient` against the resource's
+OpenAI-compatible endpoint — no `az login` / Azure AD needed:
 
 ```bash
-az login
-export FOUNDRY_PROJECT_ENDPOINT=https://your-project.cognitiveservices.azure.com
-export FOUNDRY_MODEL=gpt-4o
+export FOUNDRY_PROJECT_ENDPOINT=https://your-resource.services.ai.azure.com/openai/v1
+export FOUNDRY_MODEL=your-deployment-name
+export FOUNDRY_API_KEY=...
 export TYPESAFE_API_KEY=...
 uv run python -m agent_framework_demo.main
 ```
+
+(`agent_framework.foundry.FoundryChatClient` is a different client this repo
+doesn't use — its `credential` parameter only accepts Azure AD token
+credentials, not an API key. If you only have a key-based Azure OpenAI
+resource, `OpenAIChatClient` is the path that actually works.)
 
 ## Verified against
 
@@ -91,11 +99,23 @@ uv run python -m agent_framework_demo.main
   as they do here. `uv` resolves to the highest mutually-compatible version,
   which is 2.7.0. Not a typo, not staleness — a real ceiling from sharing one
   `pyproject.toml` across both demos.
-- `agent-framework` 1.19.0 + `agent-framework-azure-ai` 1.0.0rc6 (pre-release
-  — install with `uv add --prerelease=allow` if you're adding it fresh).
-  `FoundryChatClient` lives under `agent_framework.foundry`.
+- `agent-framework` 1.19.0. Live-tested end to end against a real Azure
+  OpenAI deployment via `agent_framework.openai.OpenAIChatClient` (plain API
+  key against the resource's `.../openai/v1` endpoint) —
+  `agent_framework.foundry.FoundryChatClient` exists too but requires Azure
+  AD auth (`TokenCredential`, no plain API key support), so this repo
+  doesn't use it. `agent-framework-azure-ai` was tried first and dropped —
+  it's a different, incompatible package (`ImportError: cannot import name
+  'BaseContextProvider'` against this core version).
+- Azure/OpenAI structured outputs reject Pydantic discriminated unions:
+  live 400 — `'oneOf' is not permitted`. `agent_framework_demo/schemas.py`
+  defines a discriminator-free `VideoTimelineAzure` for the wire format;
+  `main.py` converts the response back into the canonical
+  `common.schemas.VideoTimeline` before handing it to `check_segment`.
+  Gemini/ADK has no such restriction (verified in Day 1).
 - TypeSafe Jev API — `POST https://api.typesafe.ai/v1/systemone`, see
-  `common/jev_client.py`.
+  `common/jev_client.py`. Also has an official SDK, `typesafe-sdk`
+  (`pip install typesafe-sdk`), which `common/jev_client.py` now uses.
 
 Both demos' `director_agent.py` imports were checked against the installed
 SDKs (constructor signatures, field names) at write time. The

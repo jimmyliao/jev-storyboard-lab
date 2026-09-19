@@ -1,11 +1,11 @@
 """Run the Microsoft Agent Framework director agent, then QC every segment with Jev.
 
-Requires an Azure AI Foundry project with a structured-output-capable
-deployment (GPT-4o-2024-08-06+ or GPT-5.x):
-  FOUNDRY_PROJECT_ENDPOINT
-  FOUNDRY_MODEL
-  TYPESAFE_API_KEY          — https://console.typesafe.ai
-  (Azure auth via `az login` / DefaultAzureCredential — see README)
+Requires an Azure OpenAI / Azure AI Foundry resource with a structured-
+output-capable deployment (GPT-4o-2024-08-06+ or GPT-5.x):
+  FOUNDRY_PROJECT_ENDPOINT   — e.g. https://your-resource.services.ai.azure.com/openai/v1
+  FOUNDRY_MODEL              — your deployment name
+  FOUNDRY_API_KEY            — the resource's API key
+  TYPESAFE_API_KEY           — https://console.typesafe.ai
 
 Usage:
   uv run python -m agent_framework_demo.main "20 秒的 YouTube Shorts，主題是 Microsoft Agent Framework 的 structured output"
@@ -22,9 +22,12 @@ from common.schemas import VideoTimeline
 async def generate_timeline(prompt: str) -> VideoTimeline:
     agent = build_director_agent()
     response = await agent.run(prompt)
-    # `.value` is the schema-validated object when `response_format` is set
-    # on ChatOptions — the Agent Framework twin of ADK's `event.output`.
-    return response.value
+    # `.value` is a VideoTimelineAzure (the Azure-compatible wire schema,
+    # see schemas.py) — round-trip it into the canonical VideoTimeline
+    # that check_segment and every downstream step expects. Pydantic's
+    # discriminated-union validator works fine on this dict; the
+    # discriminator is only unusable for schema *generation*, not parsing.
+    return VideoTimeline.model_validate(response.value.model_dump())
 
 
 async def main(prompt: str) -> None:
