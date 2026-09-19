@@ -158,7 +158,7 @@ def check_segment(segment_id: str, duration_sec: float, caption: str | None) -> 
 
 ## 拿我前陣子自己開發的影片自動轉字幕工具，當作驗證參考
 
-Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵判斷不夠精確，我把上面那支合成影片丟進我自己另一個專案——[liaostudio](https://github.com/jimmyliao/liaostudio)（一個 Whisper/Gemini 字幕產生工具）——實際轉錄一次，逐句時間戳自己會說話：
+Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵判斷不夠精確，我把上面那支合成影片丟進我自己另一個專案——**LeapieVideo**（一個 Whisper/Gemini 字幕產生工具）——實際轉錄一次，逐句時間戳自己會說話：
 
 ```json
 {"start": 2.9,   "end": 4.376,  "text": "Google ADK"},
