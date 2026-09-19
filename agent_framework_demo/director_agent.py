@@ -28,8 +28,8 @@ def build_director_agent() -> Agent:
     fail for anyone who hasn't configured Azure yet, including CI linting.
     """
     client = FoundryChatClient(
-        project_endpoint=None,  # picked up from AZURE_AI_PROJECT_ENDPOINT env var
-        model=None,  # picked up from AZURE_AI_MODEL_DEPLOYMENT_NAME env var
+        project_endpoint=None,  # picked up from FOUNDRY_PROJECT_ENDPOINT env var
+        model=None,  # picked up from FOUNDRY_MODEL env var
     )
     return Agent(
         client=client,

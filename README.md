@@ -73,8 +73,8 @@ deployment (GPT-4o-2024-08-06+ or GPT-5.x — older deployments don't support
 
 ```bash
 az login
-export AZURE_AI_PROJECT_ENDPOINT=https://your-project.cognitiveservices.azure.com
-export AZURE_AI_MODEL_DEPLOYMENT_NAME=gpt-4o
+export FOUNDRY_PROJECT_ENDPOINT=https://your-project.cognitiveservices.azure.com
+export FOUNDRY_MODEL=gpt-4o
 export TYPESAFE_API_KEY=...
 uv run python -m agent_framework_demo.main
 ```

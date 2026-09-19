@@ -2,8 +2,8 @@
 
 Requires an Azure AI Foundry project with a structured-output-capable
 deployment (GPT-4o-2024-08-06+ or GPT-5.x):
-  AZURE_AI_PROJECT_ENDPOINT
-  AZURE_AI_MODEL_DEPLOYMENT_NAME
+  FOUNDRY_PROJECT_ENDPOINT
+  FOUNDRY_MODEL
   TYPESAFE_API_KEY          — https://console.typesafe.ai
   (Azure auth via `az login` / DefaultAzureCredential — see README)
 
