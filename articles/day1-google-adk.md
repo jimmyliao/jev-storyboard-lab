@@ -81,25 +81,47 @@ director_agent = Agent(
 )
 ```
 
-現在 Jev 不是外部 Python 迴圈呼叫的東西，是 **Agent 自己會用的工具**。這才是 ADK 的 `tools=[...]` 該扛的活，也才回答得了「為什麼不直接打 API」：因為你要的不是一次性生成一份 JSON，是一個**會自我校正的 Agent**。
+我將 Jev 呼叫包裝成 ADK tool 提供給 Agent 用來作自我檢查的工具。透過這種方式，ADK 的 Agent 不只能產生一份 JSON，還能感知工具回傳的結果、並根據結果調整自己下一步要做什麼。
 
-> 這個 tool-calling 版本目前還在實作中，本文先用外部呼叫版本（`common/jev_client.check_segment`，程式碼跟上面終端機輸出用的完全相同）示範 Jev 本身怎麼運作；完整的自我校正版本，等這系列走到收尾時會補進 repo。
+> tool-calling 版本目前還在實作中，這次就用外部呼叫版本，可以參考（`common/jev_client.check_segment`）示範 Jev 本身怎麼運作。
 >
-> 補一個查證過的細節：`output_schema` 跟 `tools` 掛在同一個 Agent 上，ADK 官方是支援的——原始碼裡的說明是「在思考迴圈中暴露工具，只在最終輸出時強制套用結構」，跟我們這裡的設計完全對得上。但裝好的套件裡有一個能力檢查（`gemini_output_schema_and_tools`），只有走 **Vertex AI** 後端（`GOOGLE_GENAI_USE_VERTEXAI=1`）才會回傳可用；單純用 `GOOGLE_API_KEY`（AI Studio／Developer API，也就是本文 `.env.example` 目前寫的方式）這個組合能不能用，還沒實測驗證過，之後補上。
+> 補一個查證過的細節：`output_schema` 跟 `tools` 掛在同一個 Agent 上，ADK 官方是支援的——原始碼裡的說明是「在思考迴圈中暴露工具，只在最終輸出時強制套用結構」，跟這裡的設計對得上。但裝好的套件裡有一個能力檢查（`gemini_output_schema_and_tools`），只有走 **Vertex AI** 後端（`GOOGLE_GENAI_USE_VERTEXAI=1`）才會回傳可用；單純用 `GOOGLE_API_KEY`（AI Studio／Developer API，也就是本文 `.env.example` 目前寫的方式）這個組合能不能用，還沒實測驗證過，之後補上。
 
-## `output_schema`，不是 `response_schema`
 
-寫這篇之前，我实際裝了 `google-adk` 2.9.2，用 `inspect` 反查過 `Agent` 這個 class 真正的欄位：
+## Google ADK 的 `output_schema` != `response_schema`
+
+裝的 `google-adk` 版本是 `2.7.0`，記得呼叫 API 時要用 `output_schema`，不是 `response_schema`。
+
+你可能在官網看過類似下面的寫法：
 
 ```python
->>> from google.adk.agents import Agent
->>> list(Agent.model_fields.keys())
-[..., 'input_schema', 'output_schema', 'state_schema', ...]
+from google.adk.agents import Agent
+from common.schemas import VideoTimeline
+
+agent = Agent(
+    name="agent",
+    model="model",
+    instruction="",
+    response_schema=VideoTimeline,
+)
 ```
 
-真正的欄位名是 `output_schema`。如果你看到哪篇文章寫 `response_schema=...`，那是錯的——這個欄位在目前版本的 ADK 裡不存在，設了也不會報錯，只是安靜地被忽略。這是最容易踩的坑：你以為自己有 schema 約束，實際上完全沒有，Agent 想生什麼就生什麼。
+改成
 
-## Jev 怎麼判斷「塞不塞得下」
+```python
+from google.adk.agents import Agent
+from common.schemas import VideoTimeline
+
+agent = Agent(
+    name="agent",
+    model="model",
+    instruction="",
+    output_schema=VideoTimeline,
+)
+```
+
+
+## Jev 怎麼判斷排定的分鏡文字內容「塞不塞得下」預定的影片長度
 
 `check_segment` 本身很單純，就是把片段的秒數跟文字丟給 Jev，問一個 `noul`（是非題）。第一版是自己拿 `httpx` 手刻 REST 呼叫，後來發現 TypeSafe 有[官方 Python SDK](https://docs.typesafe.ai/sdk/python)（`pip install typesafe-sdk`），乾脆直接改用官方的：
 
