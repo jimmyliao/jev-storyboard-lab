@@ -19,7 +19,7 @@ author: Jimmy Liao
 [seg-3] video_clip  8s  ✅  (confidence=0.45)
     文字: 一行指令，Agent 自動完成程式碼生成、測試與部署
 [seg-4] credits     2s  ✅  (confidence=0.57)
-    文字: Powered by Google ADK
+    文字: 非官方技術示範
 ```
 
 這是一支 20 秒短影音的分鏡規格：四個片段，各自標好類型、秒數、文字。全部驗證得過 schema——每個欄位型別都對，沒有任何一個地方會讓 JSON parser 報錯。
