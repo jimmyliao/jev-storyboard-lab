@@ -7,6 +7,8 @@ author: Jimmy Liao
 
 # 用 Jev 幫 Google ADK 的 Agent 把關
 
+*格式合法，不等於內容合理 · 系列 1/3*
+
 ## 從 AI 自動生成影片的分鏡內容開始
 
 我們來看一個短影片的 JSON 分鏡，預計規劃會生成的文字/聲音：
