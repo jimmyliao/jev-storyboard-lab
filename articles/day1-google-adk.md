@@ -152,11 +152,11 @@ def check_segment(segment_id: str, duration_sec: float, caption: str | None) -> 
     return {"needs_review": answer.noul > 0.6, "confidence": answer.noul}
 ```
 
-回傳的 `noul` 是一個 0-1 的機率值，不是模型隨口說的「我覺得 80% 像」——TypeSafe 把這個機率值訓練的目標本身就是校準（calibration）：模型說 70% 的時候，長期而言應該真的有 70% 是對的。這跟一般 LLM 用 `logprobs` 反推信心值不一樣，`logprobs` 反映的是「這個 token 有多常見」，不是「這個判斷有多可信」。
+回傳的 `noul` 是一個 0-1 的機率值，不是 Transformer LLM 隨口回答「我覺得 80% 像」，TypeSafe 會把這個機率值訓練到讓它本身就是校準（calibration）：模型說 70% 的時候，長期而言就是有 70% 是對的。這跟一般 LLM 用 `logprobs` 反推信心值不一樣，`logprobs` 反映的是「這個 token 有多常見」，不是「這個判斷有多可信」。
 
 開頭那組真實輸出裡，`seg-2` 拿到 `confidence=0.77`，超過 0.6 的門檻被標記；其他三個都在門檻以下、判定正常。這四個數字全部是真的 API 呼叫結果，可以直接拿 repo 裡的 `common/jev_client.py` 重跑一次驗證。
 
-## 拿自己的字幕工具倒過來驗證
+## 拿我前陣子自己開發的影片自動轉字幕工具，當作驗證參考
 
 Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵判斷不夠精確，我把上面那支合成影片丟進我自己另一個專案——[liaostudio](https://github.com/jimmyliao/liaostudio)（一個 Whisper/Gemini 字幕產生工具）——實際轉錄一次，逐句時間戳自己會說話：
 
@@ -169,11 +169,11 @@ Jev 說 `seg-2` 有問題，但「有問題」到底有多嚴重？光聽耳朵�
 
 `seg-2` 對應的時間軸只到 6.557 秒。原本 JSON 裡那句完整文字是「**Google ADK 讓開發者只需三行程式碼，就能定義一個具備完整推理、規劃與工具呼叫能力、可對接任意企業系統的生產級自主代理**」——實際生出來的影片裡，旁白只唸到「讓開發者只需三行程式碼」就被下一段畫面截斷，後面一大串「就能定義一個具備完整推理、規劃與工具呼叫能力……」**整句話從頭到尾沒有被唸出來**。
 
-這不是我事後腦補的效果，是拿自己另一個生產工具轉錄出來的真實結果，剛好印證了 Jev 當初給的 `confidence=0.77`：這句文字，塞不進 3 秒鐘。
+## Day1 心得
 
-## 收尾
+這邊是系列文的第一篇，重點是機制本身：`VideoTimeline` schema，加上 Jev QC 評判是否需要重新生成分鏡片段，以及 ADK 評估自身回答是否如預期。
 
-今天的重點是機制本身：一顆兩篇都要共用的 `VideoTimeline` schema，一支 Jev QC 工具，還有「ADK 憑什麼」這個問題的誠實答案。明天把完全相同的 schema 跟 `check_segment`，原封不動搬到 Azure AI Foundry，用 Microsoft Agent Framework 重做一次——順便揭曉，這兩篇之間，`jev_client.py` 到底要改幾行。
+明天會將同樣的 schema 跟 `check_segment`，原封不動改用 Microsoft Agent Framework 重做一次。
 
 ---
 
