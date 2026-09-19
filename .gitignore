@@ -14,3 +14,9 @@ wheels/
 
 # test cache
 .pytest_cache/
+
+# Day 3 renders and other large binary article media — synced between
+# dev-box and ts-m1 via rsync, not git (see articles/media/README.md).
+articles/media/*.mp4
+articles/media/*.mov
+articles/media/*.webm
