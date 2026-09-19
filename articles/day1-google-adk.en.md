@@ -33,6 +33,8 @@ Here's a JSON storyboard for a short video, four segments, each tagged with type
 
 This is the storyboard spec for a sub-20-second short video: four segments, each labeled with type, duration, and text. It's schema-valid — every field is the right type, nothing would make a JSON parser complain.
 
+*(These 4 segments are a hand-written example matching the default prompt in `adk_demo/main.py` — I didn't have a Gemini API key on hand to actually run ADK live. What's real is the Jev step: all four `confidence` numbers are actual API results. Day 2 has the first fully live, end-to-end generated run.)*
+
 But read `seg-2`'s line out loud against a 3-second photo: anyone can tell at a glance it won't fit.
 
 Schema validation doesn't catch this. It only checks "is this a legal `photo` object," not "does this `caption` fit inside `duration_sec`." That gap — **schema-valid is not content-correct** — is what this article, and this whole series, is about.
