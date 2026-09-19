@@ -39,9 +39,7 @@ Schema validation doesn't catch this. It only checks "is this a legal `photo` ob
 
 This time we fed all four segments straight into `gemini-omni-1.1-flash`, stitched them into one video, **completely ignoring Jev's warning**, to see what happens:
 
-<video src="media/day1-full-raw-cut.mp4" controls width="360" poster=""></video>
-
-*(If your reader doesn't render video, the file is at [`articles/media/day1-full-raw-cut.mp4`](media/day1-full-raw-cut.mp4).)*
+{% youtube GURAPVvGP68 %}
 
 By the second segment you'll notice it — the narration is visibly rushed, and the scene cuts away mid-sentence.
 
