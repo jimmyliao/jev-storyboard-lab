@@ -84,6 +84,8 @@ director_agent = Agent(
 現在 Jev 不是外部 Python 迴圈呼叫的東西，是 **Agent 自己會用的工具**。這才是 ADK 的 `tools=[...]` 該扛的活，也才回答得了「為什麼不直接打 API」：因為你要的不是一次性生成一份 JSON，是一個**會自我校正的 Agent**。
 
 > 這個 tool-calling 版本目前還在實作中，本文先用外部呼叫版本（`common/jev_client.check_segment`，程式碼跟上面終端機輸出用的完全相同）示範 Jev 本身怎麼運作；完整的自我校正版本，等這系列走到收尾時會補進 repo。
+>
+> 補一個查證過的細節：`output_schema` 跟 `tools` 掛在同一個 Agent 上，ADK 官方是支援的——原始碼裡的說明是「在思考迴圈中暴露工具，只在最終輸出時強制套用結構」，跟我們這裡的設計完全對得上。但裝好的套件裡有一個能力檢查（`gemini_output_schema_and_tools`），只有走 **Vertex AI** 後端（`GOOGLE_GENAI_USE_VERTEXAI=1`）才會回傳可用；單純用 `GOOGLE_API_KEY`（AI Studio／Developer API，也就是本文 `.env.example` 目前寫的方式）這個組合能不能用，還沒實測驗證過，之後補上。
 
 ## `output_schema`，不是 `response_schema`
 
