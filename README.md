@@ -11,13 +11,13 @@ LLM) can sit underneath either one unchanged as a scene-level QC gate.
 
 ```
 common/
-  schemas.py       VideoStoryboard / StoryboardScene — the one schema both demos share
+  schemas.py       VideoTimeline / Segment (discriminated union) — the one schema both demos share
   jev_client.py     Thin client for the Jev API — used identically by both demos
 adk_demo/
-  director_agent.py Google ADK Agent, output_schema=VideoStoryboard, gemini-3.1-pro-preview
-  main.py            generate → QC every scene with Jev → print report
+  director_agent.py Google ADK Agent, output_schema=VideoTimeline, gemini-3.1-pro-preview
+  main.py            generate → QC every segment with Jev → print report
 agent_framework_demo/
-  director_agent.py Microsoft Agent Framework Agent, response_format=VideoStoryboard, Azure AI Foundry
+  director_agent.py Microsoft Agent Framework Agent, response_format=VideoTimeline, Azure AI Foundry
   main.py            same generate → QC → report, same common/jev_client.py
 tests/
   test_jev_client.py live tests against the real Jev API (skips if no key)
@@ -28,11 +28,19 @@ tests/
 A common blog-post pattern for "structured output" articles is a Pydantic
 schema bound to `response_schema` / `response_format`, a pretty-printed
 JSON result, and a `print()`. Nobody validates whether the *content* of that
-JSON is actually sane — e.g. whether `voiceover` plausibly fits inside
-`duration_seconds`. This repo adds that missing validation step using a
-model (Jev) purpose-trained for calibrated yes/no and scoring decisions,
+JSON is actually sane — e.g. whether a segment's `caption` plausibly fits
+inside its `duration_sec`. This repo adds that missing validation step using
+a model (Jev) purpose-trained for calibrated yes/no and scoring decisions,
 and structures the code so the exact same validation call works whether the
-storyboard came from Gemini-via-ADK or Azure-OpenAI-via-Agent-Framework.
+timeline came from Gemini-via-ADK or Azure-OpenAI-via-Agent-Framework.
+
+`common/schemas.py`'s discriminated-union `Segment` type (`title_card` /
+`photo` / `video_clip` / `credits`, each with its own `duration_sec`) is
+adapted from a real "LLM may only emit JSON that validates against this
+schema" pattern used in a production AI-assisted video editor built at
+[LeapDesign.ai](https://leapdesign.ai) — the segment vocabulary is generic
+video-editing terminology; nothing product- or client-identifying is
+included here.
 
 ## Setup
 
@@ -74,9 +82,9 @@ uv run python -m agent_framework_demo.main
 ## Verified against
 
 - `google-adk` 2.9.2 — the real field is `output_schema`, not
-  `response_schema`; several blog posts (including the one this repo started
-  as a rebuttal to) use the wrong name, which is silently ignored instead of
-  raising.
+  `response_schema`, which several blog posts get wrong. Setting an
+  unrecognized field is silently ignored instead of raising, so this is an
+  easy way to ship an agent that quietly drops its schema constraint.
 - `agent-framework` 1.19.0 + `agent-framework-azure-ai` 1.0.0rc6 (pre-release
   — install with `uv add --prerelease=allow` if you're adding it fresh).
   `FoundryChatClient` lives under `agent_framework.foundry`.
@@ -88,6 +96,13 @@ SDKs (constructor signatures, field names) at write time. The
 Gemini/Azure-OpenAI *calls themselves* haven't been run end-to-end in this
 repo's CI — that needs paid API access this repo doesn't ship with — so if
 you hit an SDK surface change, please open an issue.
+
+## Author
+
+[Jimmy Liao](https://memo.jimmyliao.net) — Google Developer Expert (AI/ML),
+Microsoft MVP (AI), Co-founder & CTO at [LeapDesign.ai](https://leapdesign.ai).
+Companion repo for an article series comparing structured-output agents
+across Google and Microsoft's stacks.
 
 ## License
 

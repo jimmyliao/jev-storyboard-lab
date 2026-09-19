@@ -1,4 +1,4 @@
-"""Google ADK demo: an agent that plans a short-video storyboard.
+"""Google ADK demo: an agent that plans a short-video timeline.
 
 Verified against google-adk==2.9.2 (2026-09). Note the real field name is
 `output_schema`, not `response_schema` as some older blog posts show —
@@ -9,14 +9,15 @@ easy way to ship an agent that quietly ignores your schema.
 
 from google.adk.agents import Agent
 
-from common.schemas import VideoStoryboard
+from common.schemas import VideoTimeline
 
 director_agent = Agent(
     name="director_agent",
     model="gemini-3.1-pro-preview",
     instruction=(
-        "你是一位專業的短影音廣告導演。請根據主題，規劃節奏緊湊、視覺衝擊力強的分鏡腳本。"
-        "必須精準分配每個分鏡的秒數，確保視覺與旁白完美對齊。"
+        "你是一位專業的短影音剪輯師。請根據主題，規劃一份 video timeline，"
+        "由 title_card / photo / video_clip / credits 片段組成，"
+        "確保每個片段的文字/旁白內容跟標註的秒數合理對齊，不要塞不下或太空洞。"
     ),
-    output_schema=VideoStoryboard,
+    output_schema=VideoTimeline,
 )
