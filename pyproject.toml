@@ -10,6 +10,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.3",
+    "typesafe-sdk>=0.7.0",
 ]
 
 [dependency-groups]

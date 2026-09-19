@@ -7,9 +7,9 @@ author: Jimmy Liao
 
 # 用 Jev 幫 Google ADK 的 Agent 把關
 
-## 開場：一份「完全合法」的 JSON
+## 從 AI 自動生成影片的分鏡內容開始
 
-先看一段終端機輸出，不看程式碼：
+我們來看一個短影片的 JSON 分鏡，預計規劃會生成的文字/聲音：
 
 ```
 [seg-1] title_card  3s  ✅  (confidence=0.44)
@@ -22,23 +22,21 @@ author: Jimmy Liao
     文字: 非官方技術示範
 ```
 
-這是一支 20 秒短影音的分鏡規格：四個片段，各自標好類型、秒數、文字。全部驗證得過 schema——每個欄位型別都對，沒有任何一個地方會讓 JSON parser 報錯。
+這是一支 20 秒內短影片的分鏡規格：四個片段，分別標註了類型、秒數、文字。
 
-但你自己唸一次 `seg-2` 那句文字，配上 3 秒鐘的照片：唸不完。這句話正常語速要 4 秒以上，卻被排進一張只停留 3 秒的照片。
+但你自己唸一次 `seg-2` 那句文字，配上 3 秒鐘的照片：人一判斷就知道一定是唸不完。
 
-Schema 檢查不會發現這件事——它只管「這是不是一個合法的 `photo` 物件」，不管「這個 `caption` 塞不塞得進 `duration_sec`」。**格式合法，不等於內容合理**。這個落差就是這篇文章、以及接下來這整個系列要處理的東西。
+而 Schema 檢查時，並不會發現這件事。這篇文章、以及接下來這整個系列要處理的東西，就是這個落差：如何用 AI 本身建構出比 Schema 更嚴格的防護網。
 
-別只相信我這段文字描述——我把這四個片段真的丟給 `gemini-omni-1.1-flash` 生成、串接成一支完整 17 秒的影片，看看**完全不管 Jev 警告**會是什麼下場：
+這一篇我們就把這四個片段直接呼叫 `gemini-omni-1.1-flash` 生成、串接成一支完整影片，**完全不管 Jev 警告**，看看會是什麼下場：
 
 <video src="media/day1-full-raw-cut.mp4" controls width="360" poster=""></video>
 
-*（如果你的閱讀器不放影片，直接看 [`articles/media/day1-full-raw-cut.mp4`](media/day1-full-raw-cut.mp4)；只想看出事的那 3 秒，看 [`day1-seg2-too-long.mp4`](media/day1-seg2-too-long.mp4)）*
+播到第二段時，你會知道，句子講到一半時，畫面就切走了。
 
-播到第二段你會聽出來——旁白明顯在趕，句子講到一半畫面就切走了。
+## 為什麼不直接呼叫 Gemini API 就好
 
-## 為什麼不直接打 Gemini API 就好
-
-老實說，光是「叫模型產生一份符合 schema 的 JSON」這件事，`google-adk` 不是必要的。用最陽春的 `google-genai` SDK，直接打 `gemini-3.1-pro-preview`、帶上 `response_schema`，也能拿到一模一樣的結果，程式碼還更少：
+因為，光是「叫模型產生一份符合 schema 的 JSON」這件事，`google-adk` 不是必要的。用最陽春的 `google-genai` SDK，直接打 `gemini-3.1-pro-preview`、帶上 `response_schema`，也能拿到一模一樣的結果，程式碼還更少：
 
 ```python
 from google import genai
@@ -52,11 +50,13 @@ response = client.models.generate_content(
 timeline = VideoTimeline.model_validate_json(response.text)
 ```
 
-如果 ADK 在這篇文章裡只做這件事，那它就是一個包裝結構化輸出的花俏外殼，禁不起「為什麼不直接打 API」這個問題。所以在往下寫之前，得先把這個問題答清楚。
+如果 ADK 在這篇文章裡只做這件事，那就真的沒什麼好寫的了，我們直接用 `gemini-3.1-pro-preview` 搭配 `response_schema` 產生分鏡，再用 Jev 外部檢查，把結果做成一篇文章就好。
 
-## ADK 真正該扛的活：讓 Agent 自己知道它可能錯了
+### ADK 真正有價值的應用場景是：**讓 Agent 自己知道它可能錯了**。
 
-ADK 的價值不在「產生一份 JSON」，在**編排**——讓一個 Agent 擁有工具、能感知工具回傳的結果、並根據結果調整自己下一步要做什麼。把 Jev 包成一個 ADK 工具，掛在 `director_agent` 身上，情況就不一樣了：
+ADK 的價值不在「產生一份 JSON」，是**編排** 讓一個 Agent 可以透過**工具**，感知工具回傳的結果、並根據結果調整自己下一步要做什麼。
+
+我們試著把這幾天正在熱門討論的 [Jev](https://typesafe.ai) 建構出的各類檢查工具，包成一個 ADK 工具，掛在 `director_agent` 身上，然後讓它自我檢查：
 
 ```python
 from google.adk.agents import Agent
@@ -99,25 +99,31 @@ director_agent = Agent(
 
 ## Jev 怎麼判斷「塞不塞得下」
 
-`check_segment` 本身很單純，就是把片段的秒數跟文字丟給 Jev，問一個 `noul`（是非題）：
+`check_segment` 本身很單純，就是把片段的秒數跟文字丟給 Jev，問一個 `noul`（是非題）。第一版是自己拿 `httpx` 手刻 REST 呼叫，後來發現 TypeSafe 有[官方 Python SDK](https://docs.typesafe.ai/sdk/python)（`pip install typesafe-sdk`），乾脆直接改用官方的：
 
 ```python
+from typesafe_sdk import Noul, TypeSafeClient
+
 def check_segment(segment_id: str, duration_sec: float, caption: str | None) -> dict:
     if not caption:
         return {"needs_review": False, "confidence": 0.0}
 
     state = f"片段 {segment_id}：標註時長 {duration_sec} 秒，畫面文字/旁白「{caption}」"
-    answers = ask(state, {
-        "duration_caption_mismatch": {
-            "type": "noul",
-            "instructions": (
-                "以正常中文語速估算，讀完/唸完這段文字所需時間，"
-                "是否明顯超過或短於標註的秒數（誤差超過約 30%）？"
-            ),
-        }
-    })
-    answer = answers["duration_caption_mismatch"]
-    return {"needs_review": answer["noul"] > 0.6, "confidence": answer["noul"]}
+    with TypeSafeClient() as client:
+        response = client.system_one(
+            state=state,
+            questions={
+                "duration_caption_mismatch": Noul(
+                    instructions=(
+                        "以正常中文語速估算，讀完/唸完這段文字所需時間，"
+                        "是否明顯超過或短於標註的秒數（誤差超過約 30%）？"
+                    )
+                )
+            },
+            model="jev-latest",
+        )
+    answer = response.answers["duration_caption_mismatch"]
+    return {"needs_review": answer.noul > 0.6, "confidence": answer.noul}
 ```
 
 回傳的 `noul` 是一個 0-1 的機率值，不是模型隨口說的「我覺得 80% 像」——TypeSafe 把這個機率值訓練的目標本身就是校準（calibration）：模型說 70% 的時候，長期而言應該真的有 70% 是對的。這跟一般 LLM 用 `logprobs` 反推信心值不一樣，`logprobs` 反映的是「這個 token 有多常見」，不是「這個判斷有多可信」。
