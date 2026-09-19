@@ -5,7 +5,7 @@ series: "格式合法，不等於內容合理"
 author: Jimmy Liao
 ---
 
-# 同一份 JSON，兩種下場：用 Jev 幫 Google ADK 的 Agent 把關
+# 用 Jev 幫 Google ADK 的 Agent 把關
 
 ## 開場：一份「完全合法」的 JSON
 

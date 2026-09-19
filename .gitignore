@@ -20,3 +20,6 @@ wheels/
 articles/media/*.mp4
 articles/media/*.mov
 articles/media/*.webm
+
+# macOS
+.DS_Store
