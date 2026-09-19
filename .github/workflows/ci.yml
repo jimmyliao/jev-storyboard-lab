@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --all-extras --dev
+
+      # Import sanity check — catches API drift against google-adk /
+      # agent-framework without needing Gemini or Azure credentials.
+      - name: import sanity check
+        run: |
+          uv run python -c "from adk_demo.director_agent import director_agent; print(director_agent.name)"
+          uv run python -c "from agent_framework_demo.director_agent import build_director_agent"
+          uv run python -c "from common.schemas import VideoStoryboard; from common.jev_client import check_scene"
+
+      # Real API calls. Skips itself if the secret isn't configured on this repo/fork.
+      - name: live Jev tests
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: uv run pytest tests/ -v
