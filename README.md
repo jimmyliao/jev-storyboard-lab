@@ -100,7 +100,7 @@ you hit an SDK surface change, please open an issue.
 ## Author
 
 [Jimmy Liao](https://memo.jimmyliao.net) — Google Developer Expert (AI/ML),
-Microsoft MVP (AI), Co-founder & CTO at [LeapDesign.ai](https://leapdesign.ai).
+Microsoft MVP (AI), Co-founder & CTO at [LeapCore](https://leapcore.tw).
 Companion repo for an article series comparing structured-output agents
 across Google and Microsoft's stacks.
 
