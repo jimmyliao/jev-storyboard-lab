@@ -5,17 +5,17 @@ series: "格式合法，不等於內容合理"
 author: Jimmy Liao
 ---
 
-# Microsoft Agent Framework 重現昨天的 ADK Agent
+# 用 Jev 幫 Microsoft MAF 的 Agent 把關
 
 *格式合法，不等於內容合理 · 系列 2/3*
 
 ## 昨天那段程式碼，今天原封不動搬過來——只有一半是真的
 
-昨天用 ADK 產生 `VideoTimeline`、被 Jev 抓到 `seg-2` 唸不完。今天原本的計畫很單純：同一顆 schema，換成 Microsoft Agent Framework 打 Azure，重跑一次，秀一張「兩邊程式碼長不一樣，但 `jev_client.py` 一行沒改」的對照表收工。
+昨天用 [Google ADK](https://memo.jimmyliao.net/p/jev-google-adk-agent) 產生 `VideoTimeline`、透過 Jev 檢查 `seg-2` 應該要被修改的邏輯。今天換個目標：同樣的檢查，但是改用 Microsoft Agent Framework (MAF)。
 
-**實測之後發現沒那麼單純**——換雲端不是只換 SDK 呼叫方式，schema 本身也踩到一個真的相容性問題。誠實面對這件事,比硬凹「完全零改動」更值得寫。
+以下是我採雷經驗分享跟成果:
 
-## 第一個坑：`FoundryChatClient` 需要 Azure AD，不吃 API key
+## `FoundryChatClient` 需要 Azure AD，不吃 API key
 
 Agent Framework 官方的 Azure client 是 `agent_framework.foundry.FoundryChatClient`。查了原始碼，它的 `credential` 參數型別是：
 
@@ -23,9 +23,10 @@ Agent Framework 官方的 Azure client 是 `agent_framework.foundry.FoundryChatC
 AzureCredentialTypes = TokenCredential | AsyncTokenCredential
 ```
 
-**只吃 Azure AD 憑證**（`az login` 或 service principal），不吃一般的 API key。我手上只有一把傳統的 `AZURE_OPENAI_API_KEY`，兩者天生不相容——不是少一個環境變數的問題，是驗證機制完全不同這條路。
+**這表示 MAF 只能用 Azure AD 憑證**（`az login` 或 service principal），而常用的 API key 是不行的。
 
-繞過方法：Agent Framework 也有 `agent_framework.openai.OpenAIChatClient`，支援 `api_key` + `base_url` 直接指定，而 Azure 現在的新版 endpoint（`https://<resource>.services.ai.azure.com/openai/v1`）本身就是 OpenAI 相容格式：
+Workaround： MAF 有 `agent_framework.openai.OpenAIChatClient`，支援 `api_key` + `base_url` 直接指定。
+另外 Azure endpoint 記得將指向 （`https://<resource>.services.ai.azure.com/openai/v1`）
 
 ```python
 from agent_framework import Agent, ChatOptions
@@ -44,9 +45,7 @@ director_agent = Agent(
 )
 ```
 
-不用 `az login`，純 API key，跟你手上任何一個 Azure OpenAI 資源都能直接接上。
-
-## 第二個坑：discriminated union 在 Azure 這邊直接 400
+## Pydantic discriminated union 透過 Azure foundry structured output 回傳 400
 
 昨天的 `VideoTimeline.segments` 用 Pydantic 的 discriminated union（`Field(discriminator="type")`）。Gemini/ADK 吃得下，但把同一顆 schema 綁到 `response_format`，Azure 直接回錯：
 
@@ -68,20 +67,16 @@ class VideoTimelineAzure(BaseModel):
     segments: list[Union[TitleCardSegment, PhotoSegment, VideoClipSegment, CreditsSegment]]
 ```
 
-同樣四個 segment 類型、同樣的欄位，只是拿掉 discriminator 提示。這樣 Azure 就接受了。
-
-**這不代表 schema「不能共用」**——`VideoTimelineAzure` 只是拿來綁 `response_format` 的 wire schema，拿到 Azure 回傳的 JSON 之後，直接轉回昨天那顆 canonical `VideoTimeline`：
+解決方式就是拿掉 discriminator，改成單純 `Union` (不會影響後面 rebuild  `VideoTimeline`)
 
 ```python
 response = await agent.run(prompt)
 timeline = VideoTimeline.model_validate(response.value.model_dump())
 ```
 
-Pydantic 的 discriminated union 驗證器在**解析**輸入資料時完全沒問題，只有在**產生** JSON Schema 要求模型輸出時才會撞到 `oneOf` 限制。換句話說：discriminator 對「這是不是合法資料」這件事沒差，只對「我要不要求模型自己標注是哪一種」有差。
+## `jev_client.py`
 
-## `jev_client.py` 真的一行沒改
-
-把上面兩個坑填完之後，才輪到原本要講的重點——`check_segment()` 全文照搬：
+`check_segment()` 直接使用昨天同一份，包括 `VideoTimeline`，透過 Jev 串接到後面的 LLM endpoint 達到可以互換 Gemini / Azure foundry endpoint。
 
 ```python
 from common.jev_client import check_segment
@@ -90,12 +85,10 @@ for seg in timeline.segments:
     result = check_segment(seg.id, seg.duration_sec, seg.caption)
 ```
 
-跟昨天 ADK 那篇用的是**同一個 import、同一支函式**，Jev 不知道、也不需要知道上面這份 `VideoTimeline` 是 Gemini 生的還是 Azure 生的。
-
-## 實測結果：7 個片段，1 個被抓到
+## 實際測試結果
 
 ```
-🎬 同一份規格，兩套雲端：用 Microsoft Agent Framework 重現 ADK 導演 Agent  (20s, YouTube Shorts（9:16）)
+🎬 同個 schema，用兩種 Agent framework libraries：Microsoft Agent Framework 重現 ADK 導演 Agent  (20s, YouTube Shorts（9:16）)
 
 [seg-01-neon-hook]        title_card 2.0s  ✅  (jev confidence=0.50)
     文字: 同一份 Agent 規格 能跨雲重現嗎？
@@ -122,12 +115,6 @@ for seg in timeline.segments:
 <video src="media/day2-full-raw-cut.mp4" controls width="360" poster=""></video>
 
 播到最後那張 credits 卡片時，字幕/旁白明顯被截斷——跟 Day1 的 `seg-2` 是同一種症狀，只是這次發生在片尾而不是片中。
-
-## Day 2 心得
-
-昨天講「ADK 憑什麼」，今天講「換雲要付出什麼代價」——代價不是 `jev_client.py`（那顆真的沒變），是 wire schema 要為了廠商的 structured output 限制做一次轉換，而且要驗證過信任的憑證管道對不對得上你手上實際擁有的憑證。這兩個坑都不是查文件能提前知道的，是打下去才知道的。
-
-明天把通過 Jev 檢查的 `VideoTimeline`，真的拿去生一支完整的影片。
 
 ---
 
