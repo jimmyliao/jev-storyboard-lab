@@ -54,11 +54,12 @@
     }
   ],
   "fix_a_caption": "規格可攜",
-  "fix_a_duration_sec": 3.0,
-  "fix_a_jev_confidence": 0.53,
+  "fix_a_duration_sec": 3.5,
+  "fix_a_jev_confidence": 0.41,
   "fix_b_caption": "一份規格，兩套雲端。\n追蹤看完整實作 ⚡",
-  "fix_b_duration_sec": 3.0,
-  "fix_b_jev_confidence": 0.49,
+  "fix_b_duration_sec": 5.0,
+  "fix_b_jev_confidence": 0.43,
   "original_duration_sec": 2.0,
-  "original_jev_confidence": 0.7
+  "original_jev_confidence": 0.7,
+  "note": "Jev confidence plateaus with duration margin (0.51 at 3s -> 0.41 at 6s for fix B), not monotonically improving. Audio transcription verification attempt via Gemini failed (model returned near-identical hallucinated transcripts across two calls) and is not used as evidence."
 }
