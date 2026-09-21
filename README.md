@@ -116,6 +116,15 @@ resource, `OpenAIChatClient` is the path that actually works.)
 - TypeSafe Jev API — `POST https://api.typesafe.ai/v1/systemone`, see
   `common/jev_client.py`. Also has an official SDK, `typesafe-sdk`
   (`pip install typesafe-sdk`), which `common/jev_client.py` now uses.
+- Day 2's live end-to-end run produced 7 segments with 1 flagged (LLM
+  generation is non-deterministic, so a rerun won't reproduce the same
+  count) — see `articles/media/day2-timeline.json` for the exact captions
+  and durations behind that run's numbers. The companion video
+  (`articles/media/day2-full-raw-cut.mp4`, rsync'd, not in git — see
+  `articles/media/README.md`) uses `gemini-omni-1.1-flash` via the
+  `v1beta/interactions` endpoint — the standard `google-genai` SDK's
+  `generate_content` doesn't support this model
+  (`400: This model only supports Interactions API`).
 
 Both demos' `director_agent.py` imports were checked against the installed
 SDKs (constructor signatures, field names) at write time. The

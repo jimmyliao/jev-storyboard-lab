@@ -116,6 +116,16 @@ for seg in timeline.segments:
 
 播到最後那張 credits 卡片時，字幕/旁白明顯被截斷——跟 Day1 的 `seg-2` 是同一種症狀，只是這次發生在片尾而不是片中。
 
+*(文字內容跟上面的 Jev confidence 數字，是同一次真實 API 呼叫的結果；影片畫面則是之後又重跑了一次，換成有固定主持人角色 + 燒字幕的版本，好讓內容不要只有純 UI 畫面——文案/檢測結果沒變，變的只有視覺呈現。)*
+
+值得注意的是：仔細看完整影片，**不只 `seg-07-credits-cta` 講到一半就被切掉，其他幾段实際唸出來也有點趕**，只是唸完的時間點還在 duration 內、沒有超過 Jev 的 0.6 門檻。這說明 Jev 的門檻設定其實偏保守——「沒被標記」代表的是「低於某個誤差容忍度」，不是「絕對唸得完」。這個門檻本身是可以調的（`check_segment` 裡的 `answer.noul > 0.6`），要多嚴格是產品決策，不是 Jev 幫你決定的。
+
+## Day 2 心得
+
+換了雲端，`VideoTimeline` schema 跟 `check_segment` 這條檢查邏輯完全沒變，這證明了 Jev 作為 QC gate 是真的跟 vendor 無關的——不管分鏡是 Gemini 生的還是 Azure 生的，同一套規則照樣抓得出「文字塞不進秒數」這件事。但代價也很真實：`FoundryChatClient` 的 Azure AD 限制、discriminated union 在 Azure 端直接 400，這兩個坑都不是查文件能提前知道的，是打下去才知道的。
+
+明天（Day 3）把通過 Jev 檢查、真的能唸完的版本，完整走一次生成流程，看看「文字跟秒數對得上」的結果實際長什麼樣。
+
 ---
 
 *完整程式碼：[jimmyliao/jev-storyboard-lab](https://github.com/jimmyliao/jev-storyboard-lab)*
