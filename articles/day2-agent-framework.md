@@ -3,6 +3,7 @@ title: "同一份規格，兩套雲端：Microsoft Agent Framework 重現昨天�
 day: 2
 series: "格式合法，不等於內容合理"
 author: Jimmy Liao
+cover_image: media/cover_jev_02.png
 ---
 
 # 用 Jev 幫 Microsoft MAF 的 Agent 把關
