@@ -61,5 +61,5 @@
   "fix_b_jev_confidence": 0.43,
   "original_duration_sec": 2.0,
   "original_jev_confidence": 0.7,
-  "note": "Jev confidence plateaus with duration margin (0.51 at 3s -> 0.41 at 6s for fix B), not monotonically improving. Audio transcription verification attempt via Gemini failed (model returned near-identical hallucinated transcripts across two calls) and is not used as evidence."
+  "note": "Jev confidence plateaus with duration margin (0.51 at 3s -> 0.41 at 6s for fix B), not monotonically improving. First verification attempt via Gemini audio transcription failed (hallucinated near-identical output across two calls). Second attempt using local faster-whisper (real ASR, not LLM guessing) succeeded: original clip genuinely never finishes the sentence (0-2.40s of 3.0s, missing the CTA line), fix B genuinely speaks the full sentence with buffer to spare (0-4.56s of 5.0s), fix A finishes in time but transcription quality was too low to confirm content."
 }
