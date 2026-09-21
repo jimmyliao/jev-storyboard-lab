@@ -1,0 +1,56 @@
+{
+  "title": "同一份規格，兩套雲端：用 Microsoft Agent Framework 重現 ADK 導演 Agent",
+  "target_platform": "YouTube Shorts（9:16）",
+  "total_duration_sec": 20,
+  "segments": [
+    {
+      "id": "seg-01-neon-hook",
+      "transition_in": "fade",
+      "type": "title_card",
+      "duration_sec": 2.0,
+      "caption": "同一份 Agent 規格\n能跨雲重現嗎？"
+    },
+    {
+      "id": "seg-02-adk-blueprint",
+      "transition_in": "cut",
+      "type": "video_clip",
+      "duration_sec": 3.0,
+      "caption": "昨天：用 ADK 打造「導演 Agent」"
+    },
+    {
+      "id": "seg-03-spec-core",
+      "transition_in": "crossfade",
+      "type": "photo",
+      "duration_sec": 3.0,
+      "caption": "保留核心規格：角色、流程、工具、輸出"
+    },
+    {
+      "id": "seg-04-framework-switch",
+      "transition_in": "cut",
+      "type": "video_clip",
+      "duration_sec": 4.0,
+      "caption": "今天切換 Microsoft Agent Framework\n重新接上模型與工具"
+    },
+    {
+      "id": "seg-05-orchestration",
+      "transition_in": "crossfade",
+      "type": "video_clip",
+      "duration_sec": 3.0,
+      "caption": "讓 Agent 拆解任務、調度步驟、整合結果"
+    },
+    {
+      "id": "seg-06-result",
+      "transition_in": "cut",
+      "type": "photo",
+      "duration_sec": 3.0,
+      "caption": "框架不同，導演邏輯依然可重現"
+    },
+    {
+      "id": "seg-07-credits-cta",
+      "transition_in": "fade",
+      "type": "credits",
+      "duration_sec": 2.0,
+      "caption": "一份規格，兩套雲端。\n追蹤看完整實作 ⚡"
+    }
+  ]
+}

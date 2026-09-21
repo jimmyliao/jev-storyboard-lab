@@ -92,27 +92,36 @@ for seg in timeline.segments:
 
 跟昨天 ADK 那篇用的是**同一個 import、同一支函式**，Jev 不知道、也不需要知道上面這份 `VideoTimeline` 是 Gemini 生的還是 Azure 生的。
 
-## 實測結果：8 個片段，2 個被抓到
+## 實測結果：7 個片段，1 個被抓到
 
 ```
-🎬 同一份規格，兩套雲端：Microsoft Agent Framework 重現 ADK 導演 Agent  (20s, YouTube Shorts)
+🎬 同一份規格，兩套雲端：用 Microsoft Agent Framework 重現 ADK 導演 Agent  (20s, YouTube Shorts（9:16）)
 
-[seg-01] title_card 2.0s  ✅  (jev confidence=0.52)
-[seg-02] video_clip 3.0s  ✅  (jev confidence=0.54)
-[seg-03] photo 3.0s  ✅  (jev confidence=0.44)
-[seg-04] video_clip 4.0s  ✅  (jev confidence=0.46)
-[seg-05] photo 3.0s  ✅  (jev confidence=0.42)
-[seg-06] video_clip 3.0s  ✅  (jev confidence=0.50)
-[seg-07] title_card 1.5s  ⚠️ NEEDS REVIEW  (jev confidence=0.62)
-    文字: 結論：規格可攜
-    實作細節要適配
-[seg-08] credits 0.5s  ⚠️ NEEDS REVIEW  (jev confidence=0.84)
-    文字: 訂閱看完整實作
+[seg-01-neon-hook]        title_card 2.0s  ✅  (jev confidence=0.50)
+    文字: 同一份 Agent 規格 能跨雲重現嗎？
+[seg-02-adk-blueprint]    video_clip 3.0s  ✅  (jev confidence=0.48)
+    文字: 昨天：用 ADK 打造「導演 Agent」
+[seg-03-spec-core]        photo      3.0s  ✅  (jev confidence=0.43)
+    文字: 保留核心規格：角色、流程、工具、輸出
+[seg-04-framework-switch] video_clip 4.0s  ✅  (jev confidence=0.41)
+    文字: 今天切換 Microsoft Agent Framework 重新接上模型與工具
+[seg-05-orchestration]    video_clip 3.0s  ✅  (jev confidence=0.47)
+    文字: 讓 Agent 拆解任務、調度步驟、整合結果
+[seg-06-result]           photo      3.0s  ✅  (jev confidence=0.41)
+    文字: 框架不同，導演邏輯依然可重現
+[seg-07-credits-cta]      credits    2.0s  ⚠️ NEEDS REVIEW  (jev confidence=0.70)
+    文字: 一份規格，兩套雲端。追蹤看完整實作 ⚡
 
-共 8 個片段，2 個被 Jev 標記需要人工複查。
+共 7 個片段，1 個被 Jev 標記需要人工複查。
 ```
 
-這是真的打 Azure 端到端跑出來的結果，不是編的——`seg-08` 那個 0.5 秒的 credits 卡片被標到 0.84，塞了「訂閱看完整實作」六個字進半秒鐘，跟昨天 `seg-2` 是同一種毛病，只是這次是 Microsoft 的雲、Azure 的模型生出來的。
+這是真的打 Azure 端到端跑出來的結果，不是編的——`seg-07-credits-cta` 那個 2 秒的 credits 卡片被標到 0.70，塞了「一份規格，兩套雲端。追蹤看完整實作」這句進 2 秒鐘，跟昨天 `seg-2` 是同一種毛病，只是這次是 Microsoft 的雲、Azure 的模型生出來的。
+
+同樣**完全不管 Jev 警告**，把這七段直接餵給 `gemini-omni-1.1-flash` 生成、串接成一支完整影片：
+
+<video src="media/day2-full-raw-cut.mp4" controls width="360" poster=""></video>
+
+播到最後那張 credits 卡片時，字幕/旁白明顯被截斷——跟 Day1 的 `seg-2` 是同一種症狀，只是這次發生在片尾而不是片中。
 
 ## Day 2 心得
 
