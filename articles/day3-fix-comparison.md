@@ -1,12 +1,12 @@
 ---
-title: "Jev 抓到問題之後：兩種修法，哪個對？"
+title: "Jev 抓到問題之後：用 gemini-omni-1.1-flash 實測兩種修法，哪個對？"
 day: 3
 series: "格式合法，不等於內容合理"
 author: Jimmy Liao
 cover_image: media/cover_jev_03.png
 ---
 
-# Jev 抓到影片分鏡文字超時之後，該怎麼修？
+# Jev 抓到影片分鏡文字超時之後，直接打 gemini-omni-1.1-flash 驗證該怎麼修
 
 *格式合法，不等於內容合理 · 系列 3/3*
 
