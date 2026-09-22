@@ -6,7 +6,7 @@ author: Jimmy Liao
 cover_image: media/cover_jev_03.png
 ---
 
-# Jev 抓到影片分鏡文字超時之後，直接打 gemini-omni-1.1-flash 驗證該怎麼修
+# 透過 Jev 抓到影片分鏡文字超時該怎麼修正，並用 Gemini Omni 實測
 
 *格式合法，不等於內容合理 · 系列 3/3*
 
