@@ -83,11 +83,11 @@ for dur in [2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0]:
 
 <video src="media/day3-comparison.mp4" controls width="360" poster=""></video>
 
-## 如果讓 Agent 自行決定
+## 這篇是人工修的，不是 Agent 修的
 
-這系列先利用 Jev 與 Google/Microsoft Agent Framework (Google ADK, MAF) 針對影片生成編輯進行初探。關於「讓 Agent 自行決定修法」這個功能，尚未實作。
+老實說明一下範圍：Day3 這篇從頭到尾**沒有呼叫 ADK 或 MAF 的任何 Agent**——修法 A、B 兩個版本都是我直接呼叫 `check_segment` 手動掃秒數、手改文字，再直接打 `gemini-omni-1.1-flash` 生影片，是我在跑腳本，不是 Agent 在跑。Day1、Day2 用 ADK/MAF 生的是「初版」分鏡，Jev 抓到問題之後，「怎麼修」這一步，這系列目前都還是人工做的。
 
-但 Day1 提過 ADK 支援把 Jev 包成 `FunctionTool`，讓 Agent 自我修正、最多重試兩次。合理的下一步設計是把這個取捨也變成一條規則：例如「秒數是硬限制時用修法 A，秒數有彈性時用修法 B」，寫進 Agent 的 instruction 裡，讓它自己判斷該砍文字還是該延秒數，而不是永遠只會做同一種修正。
+Day1 提過 ADK 支援把 Jev 包成 `FunctionTool`，讓 Agent 自我修正、最多重試兩次，但那個工具呼叫版本本身還沒真正做出來（見 Day1 的揭露：「tool-calling 版本目前還在實作中」）。合理的下一步是把 Day3 這裡人工做的取捨（秒數是硬限制時用修法 A，秒數有彈性時用修法 B）寫進 Agent 的 instruction 裡，讓它自己判斷該砍文字還是該延秒數，而不是永遠只會做同一種修正、更不是永遠都要人工介入。這是系列之後可以繼續做的方向，這篇先把「兩種修法都是合法解」這件事講清楚。
 
 ## 系列總結
 
